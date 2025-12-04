@@ -1,6 +1,6 @@
-# 🪩 Vibe Databricks - MLOps Pipeline Generator
+# 🪩 Vibe Databricks -  Developing in Databricks with Vibecoding
 
-Deploy end-to-end ML pipelines to Databricks using AI assistants (Claude/Cursor) with MCP (Model Context Protocol).
+Deploy end-to-end pipelines such as for ML to Databricks using AI assistants (Claude/Cursor) with MCP (Model Context Protocol).
 
 **Just describe what you want → AI builds & deploys the complete MLOps pipeline.**
 
@@ -29,6 +29,15 @@ cd vibe-databricks
 
 ### 2. Configure MCP Servers
 
+Start the MCP Server
+
+```bash
+python mcp_tools.py
+```
+The server runs at:
+```
+http://localhost:8000
+
 Add the following to your MCP configuration:
 
 **For Cursor** (`~/.cursor/mcp.json`):
@@ -51,6 +60,27 @@ Add the following to your MCP configuration:
   }
 }
 ```
+
+Restart Cursor.
+
+---
+
+### Claude Code
+
+File: `~/.config/claude/mcp.json`
+
+```json
+{
+  "mcpServers": {
+    "databricks": {
+      "type": "streamable-http",
+      "url": "http://localhost:8000/sse"
+    }
+  }
+}
+```
+
+Restart Claude Code.
 
 **For Claude Desktop** (`~/Library/Application Support/Claude/claude_desktop_config.json`):
 ```json
@@ -80,7 +110,7 @@ Open this folder in Cursor or add it to Claude Desktop, then start chatting!
 
 ---
 
-## 💬 Example Prompt
+## 💬 Example Prompt - ML pipeline
 
 Copy and paste this prompt to get started:
 
@@ -96,6 +126,30 @@ The task is to train a model on the Titanic dataset:
 - Deploy the model as a serving endpoint
 - Set up MLflow experiment logging
 - Create a CI/CD pipeline as described in the claude.md file
+
+Configuration:
+- Catalog to use: <YOUR_CATALOG>
+- Databricks workspace: <YOUR_WORKSPACE_URL>
+- GitHub repo: <YOUR_GITHUB_USERNAME>/<YOUR_REPO_NAME>
+
+Please start by checking the available MCP servers and let me know if you can use them.
+```
+
+## 💬 Example Prompt - Data Engineering pipeline
+
+Copy and paste this prompt to get started:
+```
+Please use cluster ID <YOUR_CLUSTER_ID> to create the context and do your work. 
+Follow the rules in the claude.md file.
+
+The task is to build a Data Engineering pipeline using Medallion Architecture and deploy it in Databricks:
+- Create a new schema/catalog to log all datasets and transformations.
+- Use the raw data from a source table in a certain catalog/schema.
+- Perform transformations to clean and standardize data, storing results in the Silver layer.
+- Aggregate and enrich data as required, storing results in the Gold layer.
+- Ensure all tables have proper metadata (column types, descriptions, primary/foreign keys where applicable)
+- Deploy the pipeline in Databricks using Databricks Asset Bundles.
+- Create a CI/CD pipeline iwth Github as described in the claude.md file
 
 Configuration:
 - Catalog to use: <YOUR_CATALOG>

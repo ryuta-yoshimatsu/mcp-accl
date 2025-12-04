@@ -1,7 +1,7 @@
-# 🪩 Claude Code Project — Databricks MLOps Pipeline
+# 🪩 VibeCoding Project — Developing in Databricks
 
 Goal:
-> Deploy end-to-end ML pipelines to Databricks using Asset Bundles, with CI/CD via GitHub Actions.
+> Enable end-to-end development in Databricks using VibeCoding, with CI/CD support via GitHub Actions. Can be applied to general development or ML pipelines.
 
 ---
 
@@ -72,12 +72,22 @@ For direct execution on Databricks clusters:
 
 ## 📦 Packaging & Deployment Standards
 
-### 1. Always Use Databricks Asset Bundles (DABs)
+### 1. General Deployment Instructions
+- When the user says or asks to "deploy the code or test it to Databricks", use the databricks-dev-mcp MCP you have it available.
+- Do NOT run anything locally or simulate results.
+- After any code change:
+  1. Run the updated code on Databricks using the MCP
+  2. Fetch execution results via the Databricks Command Execution API
+  3. Debug errors with real cluster output
+- If the workflow crashes in GitHub Actions, immediately inform the team and show a plan to fix the issue, including error logs and remediation steps.
+
+
+### 2. Always Use Databricks Asset Bundles (DABs)
 - Package all Databricks code using `databricks.yml`
 - Validate bundles before deployment: `databricks bundle validate -t <target>`
 - Never create standalone scripts without bundle packaging
 
-### 2. MLOps Structure
+### 3. MLOps Structure
 Organize code following the MLOps Stacks pattern:
 ```
 project/
@@ -97,12 +107,12 @@ project/
     └── ci.yml
 ```
 
-### 3. Parameterize Everything - No Hard-Coded Values
+### 4. Parameterize Everything - No Hard-Coded Values
 - Use bundle variables: `${var.catalog}`, `${var.schema}`, `${bundle.target}`
 - Workspace paths: `${workspace.current_user.userName}`
 - Environment-specific configs in `config/*.yaml`
 
-### 4. Multi-Environment Support
+### 5. Multi-Environment Support
 Always configure three targets in `databricks.yml`:
 - `dev` - Development (user workspace)
 - `staging` - Pre-production testing
@@ -129,7 +139,7 @@ The AI should create a GitHub Actions workflow (`.github/workflows/ci.yml`) that
 
 ## 🧠 AI Assistant Workflow
 
-When deploying an ML pipeline, the AI should:
+When being asked to deploy and manage a complete CI/CD end-to-end ML pipeline with Github Actions, the AI should:
 
 1. **Collect configuration** (workspace, catalog, repo) from the user
 2. **Create the DABs project** structure with all necessary files
