@@ -76,9 +76,9 @@ For direct execution on Databricks clusters:
 - When the user says or asks to "deploy the code or test it to Databricks", use the databricks-dev-mcp MCP you have it available.
 - Do NOT run anything locally or simulate results.
 - After any code change:
-  1.Run the updated code on Databricks using the MCP
-  2.Fetch execution results via the Databricks Command Execution API
-  3.Debug errors with real cluster output
+  1. Run the updated code on Databricks using the MCP
+  2. Fetch execution results via the Databricks Command Execution API
+  3. Debug errors with real cluster output
 - If the workflow crashes in GitHub Actions, immediately inform the team and show a plan to fix the issue, including error logs and remediation steps.
 
 
