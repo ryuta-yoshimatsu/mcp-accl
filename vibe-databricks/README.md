@@ -1,8 +1,8 @@
 # 🪩 Vibe Databricks -  Developing in Databricks with Vibecoding
 
-Deploy end-to-end pipelines such as for ML to Databricks using AI assistants (Claude/Cursor) with MCP (Model Context Protocol).
+Deploy end-to-end pipelines such as for ML, Data Engineering to Databricks using AI assistants (Claude/Cursor) with MCP (Model Context Protocol).
 
-**Just describe what you want → AI builds & deploys the complete MLOps pipeline.**
+**Just describe what you want → AI builds & deploys the complete pipeline.**
 
 ---
 
@@ -12,8 +12,6 @@ This template enables AI assistants to:
 - ✅ Create Databricks Asset Bundles (DABs) projects
 - ✅ Set up CI/CD with GitHub Actions
 - ✅ Deploy to multiple environments (dev/staging/prod)
-- ✅ Train ML models with hyperparameter optimization
-- ✅ Register models to Unity Catalog
 - ✅ All from natural language prompts!
 
 ---
@@ -32,7 +30,7 @@ cd vibe-databricks
 Start the MCP Server
 
 ```bash
-python mcp_tools.py
+python tools/mcp_tools.py
 ```
 The server runs at:
 ```
@@ -50,12 +48,9 @@ Add the following to your MCP configuration:
         "Authorization": "Bearer <YOUR_GITHUB_TOKEN>"
       }
     },
-    "databricks": {
-      "type": "streamable-http",
-      "url": "https://<YOUR_WORKSPACE>.cloud.databricks.com/api/2.0/mcp/functions/<CATALOG>/<SCHEMA>",
-      "headers": {
-        "Authorization": "Bearer <YOUR_DATABRICKS_PAT>"
-      }
+    "databricks-dev-mcp": {
+        "type": "http",
+        "url": "http://localhost:8000/message"
     }
   }
 }
@@ -72,9 +67,9 @@ File: `~/.config/claude/mcp.json`
 ```json
 {
   "mcpServers": {
-    "databricks": {
-      "type": "streamable-http",
-      "url": "http://localhost:8000/sse"
+    "databricks-dev-mcp": {
+      "type": "http",
+      "url": "http://localhost:8000/message"
     }
   }
 }
@@ -184,10 +179,10 @@ After the AI creates your GitHub repository, add these secrets:
 
 ## 📁 What Gets Generated
 
-The AI will create a complete MLOps project:
+The AI will create a complete the project:
 
 ```
-your-mlops-project/
+your-project/
 ├── databricks.yml              # DABs configuration
 ├── requirements.txt            # Python dependencies
 ├── resources/
@@ -217,9 +212,7 @@ your-mlops-project/
 | **Multi-Environment** | Automatic dev/staging/prod deployments |
 | **Unity Catalog** | Models registered to UC for governance |
 | **MLflow Tracking** | Experiment tracking and model versioning |
-| **Serverless Support** | Works with serverless compute |
 | **GitHub Actions CI/CD** | Automated validation and deployment |
-| **Hyperparameter Tuning** | Built-in Hyperopt optimization |
 
 ---
 
@@ -239,14 +232,3 @@ If you see "Source IP address is blocked", your workspace has IP restrictions. O
 - [MCP Specification](https://modelcontextprotocol.io/)
 - [GitHub Actions for Databricks](https://github.com/databricks/setup-cli)
 
----
-
-## 🤝 Contributing
-
-PRs welcome! Please follow the patterns in `claude.md` for consistency.
-
----
-
-## 📄 License
-
-MIT License - feel free to use this template for your projects!

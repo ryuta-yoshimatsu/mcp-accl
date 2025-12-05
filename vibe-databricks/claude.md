@@ -7,7 +7,7 @@ Goal:
 
 ## 🚀 Before Starting - User Configuration Required
 
-When a user asks to deploy an ML pipeline, the AI assistant should **first collect the following information**:
+When a user asks to deploy an pipeline, the AI assistant should **first collect the following information**:
 
 ### 1. Databricks Workspace
 Ask the user:
@@ -41,12 +41,9 @@ For direct execution on Databricks clusters:
 ```json
 {
   "mcpServers": {
-    "databricks": {
-      "type": "streamable-http",
-      "url": "https://<WORKSPACE>/api/2.0/mcp/functions/<CATALOG>/<SCHEMA>",
-      "headers": {
-        "Authorization": "Bearer <DATABRICKS_PAT>"
-      }
+    "databricks-dev-mcp": {
+      "type": "http",
+      "url": "http://localhost:8000/message"
     }
   }
 }
@@ -75,11 +72,12 @@ For direct execution on Databricks clusters:
 ### 1. General Deployment Instructions
 - When the user says or asks to "deploy the code or test it to Databricks", use the databricks-dev-mcp MCP you have it available.
 - Do NOT run anything locally or simulate results.
+- Create the entire codebase locally inside its own folder within the main directory (the vibe-databricks directory). Please don’t place the new files directly into the main directory — otherwise they will mix with the existing vibe-code setup. 
 - After any code change:
   1. Run the updated code on Databricks using the MCP
   2. Fetch execution results via the Databricks Command Execution API
   3. Debug errors with real cluster output
-- If the workflow crashes in GitHub Actions, immediately inform the team and show a plan to fix the issue, including error logs and remediation steps.
+- When the workflow runs on GitHub (Actions) please check after submission if pipline was successful. If the workflow crashes in GitHub Actions, immediately inform the user and show a plan to fix the issue, including error logs and remediation steps.
 
 
 ### 2. Always Use Databricks Asset Bundles (DABs)
@@ -87,8 +85,8 @@ For direct execution on Databricks clusters:
 - Validate bundles before deployment: `databricks bundle validate -t <target>`
 - Never create standalone scripts without bundle packaging
 
-### 3. MLOps Structure
-Organize code following the MLOps Stacks pattern:
+### 3. Pipeline Structure
+Organize code following the this pattern:
 ```
 project/
 ├── databricks.yml          # Bundle configuration
@@ -106,6 +104,8 @@ project/
 └── .github/workflows/      # CI/CD pipelines
     └── ci.yml
 ```
+**⚠️ Important DABs Path Resolution:**
+When using `include: - resources/*.yml` in `databricks.yml`, notebook paths in those resource files are resolved **relative to the resource file location**, not the bundle root. For example, if your job YAML is in `resources/`, use `notebook_path: ../src/notebooks/my_notebook.py` (with `../` to navigate back to bundle root) instead of `notebook_path: src/notebooks/my_notebook.py`.
 
 ### 4. Parameterize Everything - No Hard-Coded Values
 - Use bundle variables: `${var.catalog}`, `${var.schema}`, `${bundle.target}`
