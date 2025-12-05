@@ -21,7 +21,6 @@ This template enables AI assistants to:
 ### 1. Clone This Repository
 
 ```bash
-git clone https://github.com/<your-org>/vibe-databricks.git
 cd vibe-databricks
 ```
 
