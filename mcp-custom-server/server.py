@@ -7,9 +7,6 @@ try:
 except ImportError:  # pragma: no cover
     load_dotenv = None
 
-from starlette.applications import Starlette
-from starlette.routing import Mount, Route
-from starlette.responses import PlainTextResponse
 import uvicorn
 
 try:
@@ -172,12 +169,6 @@ async def perplexity_chat_tool(
         # Avoid crashing the stateless session TaskGroup; return structured error.
         return {"error": str(e), "error_type": type(e).__name__}
 
-# -----------------------
-# Mount FastMCP under /
-# -----------------------
-async def homepage(request):
-    return PlainTextResponse("Healthcare MCP Server running")
-
 def _streamable_mcp_asgi_app():
     """
     Compatibility shim across FastMCP versions.
@@ -190,19 +181,8 @@ def _streamable_mcp_asgi_app():
         return mcp_app.http_app()
     raise RuntimeError("FastMCP does not expose a streamable/http ASGI app on this version.")
 
-_MCP_ASGI_APP = _streamable_mcp_asgi_app()
-_MCP_LIFESPAN = getattr(_MCP_ASGI_APP, "lifespan", None)
-
-starlette_app = Starlette(
-    debug=True,
-    routes=[
-        # Keep a simple health endpoint without conflicting with MCP endpoints at "/"
-        Route("/health", homepage),
-        Mount("/", app=_MCP_ASGI_APP),
-    ],
-    # Critical: FastMCP streamable HTTP requires its own lifespan to initialize the task group.
-    lifespan=_MCP_LIFESPAN,
-)
+app = _streamable_mcp_asgi_app()
 
 if __name__ == "__main__":
-    uvicorn.run(starlette_app, host="0.0.0.0", port=APP_PORT)
+    # Serve the FastMCP ASGI app directly to avoid parent-ASGI lifespan / stream lifecycle issues.
+    uvicorn.run(app, host="0.0.0.0", port=APP_PORT)
