@@ -1,5 +1,8 @@
 # server.py
 import os
+from contextlib import asynccontextmanager
+from typing import Optional
+
 try:
     from dotenv import load_dotenv
 except ImportError:  # pragma: no cover
@@ -10,7 +13,12 @@ from starlette.routing import Mount, Route
 from starlette.responses import PlainTextResponse
 import uvicorn
 
-from mcp.server.fastmcp import FastMCP
+try:
+    # Newer releases ship FastMCP as a separate package.
+    from fastmcp import FastMCP  # type: ignore
+except ImportError:  # pragma: no cover
+    # Older releases expose FastMCP under the mcp package.
+    from mcp.server.fastmcp import FastMCP  # type: ignore
 
 if load_dotenv:
     load_dotenv()
@@ -57,7 +65,7 @@ async def call_perplexity_api(
     prompt: str,
     *,
     model: str = "sonar",
-    system_prompt: str | None = None,
+    system_prompt: Optional[str] = None,
     max_tokens: int = 512,
     temperature: float = 0.2,
 ) -> dict:
@@ -140,7 +148,7 @@ async def schedule_follow_up_tool(patient_id: str, preferred_window: str):
 async def perplexity_chat_tool(
     prompt: str,
     model: str = "sonar",
-    system_prompt: str | None = None,
+    system_prompt: Optional[str] = None,
     max_tokens: int = 512,
     temperature: float = 0.2,
 ):
@@ -153,13 +161,17 @@ async def perplexity_chat_tool(
     :param max_tokens: Optional: response token limit
     :param temperature: Optional: sampling temperature
     """
-    return await call_perplexity_api(
-        prompt,
-        model=model,
-        system_prompt=system_prompt,
-        max_tokens=max_tokens,
-        temperature=temperature,
-    )
+    try:
+        return await call_perplexity_api(
+            prompt,
+            model=model,
+            system_prompt=system_prompt,
+            max_tokens=max_tokens,
+            temperature=temperature,
+        )
+    except Exception as e:
+        # Avoid crashing the stateless session TaskGroup; return structured error.
+        return {"error": str(e), "error_type": type(e).__name__}
 
 # -----------------------
 # Mount FastMCP under /
@@ -167,13 +179,46 @@ async def perplexity_chat_tool(
 async def homepage(request):
     return PlainTextResponse("Healthcare MCP Server running")
 
+def _streamable_mcp_asgi_app():
+    """
+    Compatibility shim across FastMCP versions.
+    """
+    # Preferred name in current MCP Python SDK.
+    if hasattr(mcp_app, "streamable_http_app"):
+        return mcp_app.streamable_http_app()
+    # Fallbacks for other variants.
+    if hasattr(mcp_app, "http_app"):
+        return mcp_app.http_app()
+    raise RuntimeError("FastMCP does not expose a streamable/http ASGI app on this version.")
+
+@asynccontextmanager
+async def lifespan(app):
+    """
+    Starlette lifespan wrapper that works across MCP SDK versions.
+    """
+    sm = getattr(mcp_app, "session_manager", None)
+    if sm is None or not hasattr(sm, "run"):
+        yield
+        return
+
+    maybe_cm = sm.run()
+    # Newer versions: async context manager
+    if hasattr(maybe_cm, "__aenter__") and hasattr(maybe_cm, "__aexit__"):
+        async with maybe_cm:
+            yield
+        return
+
+    # Fallback: if it's an awaitable setup, just await it.
+    await maybe_cm
+    yield
+
 starlette_app = Starlette(
     debug=True,
     routes=[
         Route("/", homepage),
-        Mount("/", app=mcp_app.streamable_http_app()),
+        Mount("/", app=_streamable_mcp_asgi_app()),
     ],
-    lifespan=lambda app: mcp_app.session_manager.run(),
+    lifespan=lifespan,
 )
 
 if __name__ == "__main__":
