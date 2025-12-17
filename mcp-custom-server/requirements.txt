@@ -2,3 +2,4 @@ python-dotenv
 starlette
 uvicorn
 mcp
+httpx
