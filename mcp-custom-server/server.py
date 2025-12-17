@@ -1,6 +1,5 @@
 # server.py
 import os
-from contextlib import asynccontextmanager
 from typing import Optional
 
 try:
@@ -191,34 +190,18 @@ def _streamable_mcp_asgi_app():
         return mcp_app.http_app()
     raise RuntimeError("FastMCP does not expose a streamable/http ASGI app on this version.")
 
-@asynccontextmanager
-async def lifespan(app):
-    """
-    Starlette lifespan wrapper that works across MCP SDK versions.
-    """
-    sm = getattr(mcp_app, "session_manager", None)
-    if sm is None or not hasattr(sm, "run"):
-        yield
-        return
-
-    maybe_cm = sm.run()
-    # Newer versions: async context manager
-    if hasattr(maybe_cm, "__aenter__") and hasattr(maybe_cm, "__aexit__"):
-        async with maybe_cm:
-            yield
-        return
-
-    # Fallback: if it's an awaitable setup, just await it.
-    await maybe_cm
-    yield
+_MCP_ASGI_APP = _streamable_mcp_asgi_app()
+_MCP_LIFESPAN = getattr(_MCP_ASGI_APP, "lifespan", None)
 
 starlette_app = Starlette(
     debug=True,
     routes=[
-        Route("/", homepage),
-        Mount("/", app=_streamable_mcp_asgi_app()),
+        # Keep a simple health endpoint without conflicting with MCP endpoints at "/"
+        Route("/health", homepage),
+        Mount("/", app=_MCP_ASGI_APP),
     ],
-    lifespan=lifespan,
+    # Critical: FastMCP streamable HTTP requires its own lifespan to initialize the task group.
+    lifespan=_MCP_LIFESPAN,
 )
 
 if __name__ == "__main__":
