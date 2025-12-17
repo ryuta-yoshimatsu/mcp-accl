@@ -21,7 +21,9 @@ if load_dotenv:
 APP_PORT = int(os.getenv("APP_PORT", 8000))  # default port
 
 # --- FastMCP setup ---
-mcp_app = FastMCP(name="healthcare-mcp-server", stateless_http=True)
+# NOTE: Keep this stateful (default). Some clients/agents will disconnect early
+# in stateless mode, which can surface as anyio.ClosedResourceError on response.
+mcp_app = FastMCP(name="healthcare-mcp-server")
 
 # -----------------------
 # Perplexity API config

@@ -2,5 +2,4 @@ python-dotenv
 starlette
 uvicorn
 fastmcp==2.14.1
-mcp>=1.24.0
 httpx
